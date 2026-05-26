@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LCN Task List Schema",
+  "type": "array",
+  "description": "存储在 GitHub 上的命令序列数据结构",
+  "items": {
+    "type": "object",
+    "required": ["task_id", "task_name", "steps"],
+    "properties": {
+      "task_id": {
+        "type": "string",
+        "description": "唯一任务标识 (如时间戳)"
+      },
+      "task_name": {
+        "type": "string",
+        "description": "任务组名称，如 '部署 Docker'"
+      },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "分类标签，如 ['system', 'network']"
+      },
+      "steps": {
+        "type": "array",
+        "description": "具有先后顺序的具体执行步骤",
+        "items": {
+          "type": "object",
+          "required": ["step_id", "desc", "cmd"],
+          "properties": {
+            "step_id": { "type": "integer" },
+            "desc": { "type": "string", "description": "操作说明" },
+            "cmd": { "type": "string", "description": "要执行的 Bash 命令" }
+          }
+        }
+      }
+    }
+  }
+}

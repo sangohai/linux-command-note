@@ -1,0 +1,31 @@
+project:
+  name: Linux-Command-Note (LCN)
+  version: 0.1.0
+  environment:
+    windows: Frontend Dev (HTML5, Bootstrap 5, Vanilla JS)
+    linux: Ubuntu 25.10, Xfce 4.20, Bash, jq, curl
+  architecture: Web + Serverless (GitHub API) + Bash CLI
+
+current_phase: 0_Initialization # 当前阶段：项目骨架初始化
+
+tasks:
+  - id: t1_setup_repo
+    desc: 创建项目目录结构与 AI 核心文档
+    state: in_progress
+  - id: t2_data_schema
+    desc: 制定前后端 JSON 数据格式 (schema.json)
+    state: completed
+  - id: t3_frontend_ui
+    desc: 开发 Web 端 HTML5+Bootstrap 基础页面
+    state: pending
+  - id: t4_github_api
+    desc: 开发 Web 端读写 GitHub Gist/Repository 的 JS 逻辑
+    state: pending
+  - id: t5_bash_cli
+    desc: 开发 Linux 端 lcn 交互脚本 (read -e -i)
+    state: pending
+
+docs_index:
+  status: docs/project_status.yaml
+  architecture: docs/architecture.md
+  schema: docs/schema.json
