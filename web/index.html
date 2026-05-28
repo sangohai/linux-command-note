@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Command Note</title>
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { height: calc(100vh - 56px); overflow-y: auto; background-color: #fff; border-right: 1px solid #dee2e6; }
+        .editor-area { height: calc(100vh - 56px); overflow-y: auto; padding: 20px; }
+        .step-card { border-left: 4px solid #0d6efd; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="bi bi-terminal"></i> LCN Web 端</a>
+            <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="bi bi-gear"></i> 设置 (Token)
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 左侧：任务列表 -->
+            <div class="col-md-3 sidebar p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">任务列表</h5>
+                    <button class="btn btn-sm btn-primary" id="btn-new-task"><i class="bi bi-plus"></i> 新建</button>
+                </div>
+                <div class="list-group" id="task-list">
+                    <!-- 列表项将由 JS 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 右侧：任务编辑器 -->
+            <div class="col-md-9 editor-area">
+                <div class="card shadow-sm" id="editor-card" style="display: none;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title m-0">任务编辑</h5>
+                        <div>
+                            <button class="btn btn-outline-success btn-sm me-2"><i class="bi bi-robot"></i> AI 辅助生成</button>
+                            <button class="btn btn-success btn-sm" id="btn-save-task"><i class="bi bi-save"></i> 保存至 GitHub</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="task-form">
+                            <input type="hidden" id="task-id">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">任务名称 (Task Name)</label>
+                                    <input type="text" class="form-control" id="task-name" placeholder="例如：部署 Nginx 环境" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">标签 (Tags, 逗号分隔)</label>
+                                    <input type="text" class="form-control" id="task-tags" placeholder="system, nginx">
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>执行步骤 (Steps)</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-step">
+                                    <i class="bi bi-plus-circle"></i> 添加步骤
+                                </button>
+                            </div>
+                            
+                            <!-- 动态步骤容器 -->
+                            <div id="steps-container">
+                                <!-- 步骤项将由 JS 插入此处 -->
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 欢迎提示 (无选中任务时显示) -->
+                <div id="welcome-msg" class="text-center text-muted mt-5">
+                    <i class="bi bi-terminal-split display-1"></i>
+                    <h4 class="mt-3">选择左侧任务或新建一个任务</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置 Modal (模态框) -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">系统设置</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">GitHub Personal Access Token</label>
+                        <input type="password" class="form-control" id="config-token" placeholder="ghp_xxxxxxxxxxxx">
+                        <div class="form-text text-danger">⚠️ Token 将仅保存在本地浏览器的 LocalStorage 中，不会泄露。</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gist ID (用于存储数据)</label>
+                        <input type="text" class="form-control" id="config-gist" placeholder="例如：1a2b3c4d5e...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-settings">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- 引入 Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 必须先引入 API 类 -->
+    <script src="js/github_api.js"></script>
+    <!-- 然后再引入业务逻辑 -->
+    <script src="js/app.js"></script>
+</body>
+</html>
