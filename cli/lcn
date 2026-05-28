@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# ==========================================================
+# LCN - Linux Command Note CLI (消费端)
+# ==========================================================
+
+# 1. 检查依赖与配置
+if ! command -v jq &> /dev/null; then
+    echo -e "\e[31m[错误] 未安装 jq。请执行: sudo apt install jq\e[0m"
+    exit 1
+fi
+
+CONFIG_FILE="$HOME/.lcnrc"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "\e[31m[错误] 找不到配置文件。\e[0m"
+    echo "请在终端执行: nano ~/.lcnrc 并填入 GH_TOKEN 和 GIST_ID"
+    exit 1
+fi
+
+# 加载配置
+source "$CONFIG_FILE"
+
+# 2. 从 GitHub Gist 拉取数据
+echo -e "\e[36m🔄 正在从云端获取任务列表...\e[0m"
+RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/gists/$GIST_ID")
+
+# 提取 content 字段
+JSON_DATA=$(echo "$RESPONSE" | jq -r '.files["lcn_tasks.json"].content')
+
+# 检查是否拉取成功
+if [ -z "$JSON_DATA" ] || [ "$JSON_DATA" == "null" ]; then
+    echo -e "\e[31m[错误] 数据拉取失败，请检查网络或 Gist ID/Token 设置。\e[0m"
+    exit 1
+fi
+
+# 3. 打印任务菜单
+echo ""
+echo -e "\e[32m====================================\e[0m"
+echo -e "\e[32m       🐧 Linux Command Note        \e[0m"
+echo -e "\e[32m====================================\e[0m"
+
+TASK_COUNT=$(echo "$JSON_DATA" | jq '. | length')
+
+if [ "$TASK_COUNT" -eq 0 ]; then
+    echo "当前云端没有任务记录。"
+    exit 0
+fi
+
+# 循环输出任务列表
+for (( i=0; i<$TASK_COUNT; i++ )); do
+    TNAME=$(echo "$JSON_DATA" | jq -r ".[$i].task_name")
+    TTAGS=$(echo "$JSON_DATA" | jq -r ".[$i].tags | join(\", \")")
+    STEP_LEN=$(echo "$JSON_DATA" | jq ".[$i].steps | length")
+    echo -e " \e[33m[$i]\e[0m $TNAME \e[90m($STEP_LEN 步) [标签: $TTAGS]\e[0m"
+done
+
+echo "------------------------------------"
+
+# 4. 选择任务
+read -p "👉 请输入要执行的任务编号 (按 Ctrl+C 退出): " TASK_IDX
+
+# 输入校验
+if ! [[ "$TASK_IDX" =~ ^[0-9]+$ ]] || [ "$TASK_IDX" -ge "$TASK_COUNT" ]; then
+    echo -e "\e[31m输入无效，已退出。\e[0m"
+    exit 1
+fi
+
+# 5. 执行工作流 (核心黑科技)
+TNAME_SELECTED=$(echo "$JSON_DATA" | jq -r ".[$TASK_IDX].task_name")
+STEPS_JSON=$(echo "$JSON_DATA" | jq ".[$TASK_IDX].steps")
+STEP_COUNT=$(echo "$STEPS_JSON" | jq '. | length')
+
+echo ""
+echo -e "\e[35m🚀 开始执行任务: $TNAME_SELECTED\e[0m"
+echo "------------------------------------"
+
+for (( j=0; j<$STEP_COUNT; j++ )); do
+    DESC=$(echo "$STEPS_JSON" | jq -r ".[$j].desc")
+    CMD=$(echo "$STEPS_JSON" | jq -r ".[$j].cmd")
+
+    echo ""
+    echo -e "\e[34m[步骤 $((j+1))/$STEP_COUNT]\e[0m $DESC"
+    
+    # 核心交互: 预填命令到输入框，允许编辑
+    read -e -i "$CMD" -p "❯ " USER_CMD
+    
+    if [ -z "$USER_CMD" ]; then
+        echo -e "\e[33m⏭️  命令被清空，跳过此步骤。\e[0m"
+        continue
+    fi
+    
+    # 执行命令 (使用 eval 支持管道和重定向)
+    eval "$USER_CMD"
+    
+    # 获取上一个命令的执行状态码
+    STATUS=$?
+    if [ $STATUS -ne 0 ]; then
+        echo -e "\e[31m❌ 命令执行失败 (退出码: $STATUS)。中断后续任务！\e[0m"
+        break
+    fi
+done
+
+echo ""
+echo -e "\e[32m🎉 任务流结束。\e[0m"
